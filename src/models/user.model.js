@@ -18,3 +18,7 @@ userSchema.pre('save', async function (next) {
    this.password = hashedPassword;
    next();
 });
+
+userSchema.methods.isPasswordCorrect = function (password) {
+   return bcrypt.compareSync(password, this.password);
+};
