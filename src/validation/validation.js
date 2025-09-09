@@ -18,3 +18,12 @@ const signupValidation = function (body) {
    const result = userSchema.safeParse(body);
    return result;
 };
+
+const todoSchema = z.object({
+   task: z.string().trim().min(1, 'Task is required'),
+});
+
+const todoValidation = function (body) {
+   const result = todoSchema.safeParse(body);
+   return result;
+};
