@@ -110,3 +110,5 @@ const listTodos = asynchandler(async (req, res) => {
       )
    );
 });
+
+export { createTodo, deleteTodo, doneTodo, updateTodo, listTodos };
