@@ -89,3 +89,24 @@ const updateTodo = asynchandler(async (req, res) => {
 
    res.status(200).json(new apiResponse(200, 'Todo updated', todo));
 });
+
+const listTodos = asynchandler(async (req, res) => {
+   const result = objectIdValidation({ userId: req.user._id });
+   if (result.error) {
+      const err = z.treeifyError(result.error);
+      const errMessageObject = JSON.stringify(err.properties);
+      throw new apiError(400, errMessageObject);
+   }
+
+   const { userId } = result.data;
+   const todos = await Todo.find({ userId });
+   if (!todos.length) throw new apiError(404, 'No todo exits');
+
+   res.status(200).json(
+      new apiResponse(
+         200,
+         `Got ${todos.length == 1 ? '1 todo' : `${todos.length} todo's`}`,
+         todos
+      )
+   );
+});
