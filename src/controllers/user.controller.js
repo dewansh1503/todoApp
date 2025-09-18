@@ -8,3 +8,11 @@ import {
    signinValidation,
 } from '../validation/validation.js';
 import z from 'zod';
+
+async function generateTokens(user) {
+   let accessToken = user.generateAccessToken();
+   let refreshToken = user.generateRefreshToken();
+   user.refreshToken = refreshToken;
+   await user.save();
+   return { accessToken, refreshToken };
+}
