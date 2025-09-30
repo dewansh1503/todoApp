@@ -57,3 +57,62 @@ const singup = asynchandler(async (req, res) => {
       );
    }
 });
+
+const login = asynchandler(async (req, res) => {
+   const result = signinValidation(req.body);
+
+   if (result.error) {
+      let err = z.treeifyError(result.error);
+      const errMessageObject = JSON.stringify(err.properties);
+      // errMessageObject contain fields with associated error message
+      throw new apiError(400, errMessageObject);
+   }
+
+   const { email, password } = result.data;
+   let founduser = await User.findOne({ email });
+
+   if (!founduser) {
+      throw new apiError(404, 'User not found');
+   } else if (!founduser.isPasswordCorrect(password)) {
+      throw new apiError(401, 'Incorrect credentials');
+   } else {
+      // check if user already logged in
+
+      let decodedToken;
+      if (req.cookies.accessToken) {
+         try {
+            decodedToken = jwt.verify(
+               req.cookies.accessToken,
+               process.env.ACCESS_TOKEN_SECRET
+            );
+         } catch (err) {
+            throw new apiError(401, 'Access token expired');
+         }
+         if (decodedToken) {
+            throw new apiError(409, `${founduser.username} already logged in`);
+         }
+      }
+
+      let { accessToken, refreshToken } = await generateTokens(founduser);
+      const options = {
+         httpOnly: true,
+         secure: true,
+         sameSite: 'lax',
+         maxAge: parseInt(process.env.COOKIE_EXPIRY),
+      };
+
+      res.status(200)
+         .cookie('accessToken', accessToken, options)
+         .cookie('refreshToken', refreshToken, options)
+         .json(
+            new apiResponse(
+               200,
+               `${founduser.username} logged in successfully`,
+               {
+                  accessToken,
+                  refreshToken,
+               }
+            )
+         );
+   }
+});
