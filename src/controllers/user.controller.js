@@ -16,3 +16,44 @@ async function generateTokens(user) {
    await user.save();
    return { accessToken, refreshToken };
 }
+
+const singup = asynchandler(async (req, res) => {
+   /* zod response
+   error =>
+      flat { formErrors: [], fieldErrors: { email: [ 'Invalid email address' ] } }
+   
+   valid =>
+      result {
+   success: true,
+   data: {
+      username: 'shyam',
+      password: '123123123',
+      email: 'shyam@gmail.com'
+      }
+      }
+   */
+
+   const result = signupValidation(req.body);
+   if (result.error) {
+      let err = z.treeifyError(result.error);
+      const errMessageObject = JSON.stringify(err.properties);
+      // errMessageObject contain fields with associated error message
+      throw new apiError(400, errMessageObject);
+   }
+   const { username, email, password } = result.data;
+
+   let founduser = await User.findOne({ email });
+
+   if (founduser) {
+      throw new apiError(409, 'User already exists');
+   } else {
+      await User.create({
+         username,
+         password, // hashed password before saving in db(todo.model.js)
+         email,
+      });
+      res.status(201).json(
+         new apiResponse(201, 'Singed up successfully', { username, email })
+      );
+   }
+});
