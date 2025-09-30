@@ -116,3 +116,17 @@ const login = asynchandler(async (req, res) => {
          );
    }
 });
+
+const logout = asynchandler(async (req, res) => {
+   const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+         $unset: { refreshToken: '' },
+      },
+      { new: true }
+   );
+
+   res.clearCookie('accessToken');
+   res.clearCookie('refreshToken');
+   res.status(200).json(new apiResponse(200, `${user.username} logged out`));
+});
