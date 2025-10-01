@@ -155,3 +155,5 @@ const refreshTokens = asynchandler(async (req, res) => {
       .cookie('refreshToken', refreshToken)
       .json(new apiResponse(200, 'Refreshed tokens'));
 });
+
+export { singup, login, logout, refreshTokens };
