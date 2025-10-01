@@ -130,3 +130,28 @@ const logout = asynchandler(async (req, res) => {
    res.clearCookie('refreshToken');
    res.status(200).json(new apiResponse(200, `${user.username} logged out`));
 });
+
+const refreshTokens = asynchandler(async (req, res) => {
+   const token = req.cookies.refreshToken;
+   if (!token) throw new apiError(401, 'Token not found');
+
+   let decodedToken;
+   // let user;
+   try {
+      decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+   } catch (error) {
+      throw new apiError(401, 'Invalid refresh token');
+   }
+   const user = await User.findById(decodedToken._id);
+
+   if (user.refreshToken !== token)
+      throw new apiError(401, 'Refresh token mismatch');
+
+   // clearing old cookies
+   res.clearCookie('accessToken').clearCookie('refreshToken');
+   const { accessToken, refreshToken } = await generateTokens(user);
+   res.status(200)
+      .cookie('accessToken', accessToken)
+      .cookie('refreshToken', refreshToken)
+      .json(new apiResponse(200, 'Refreshed tokens'));
+});
